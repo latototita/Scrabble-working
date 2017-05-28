@@ -1,22 +1,17 @@
-const NUM_ROWS = 15;
-const NUM_COLUMNS = 15;
-const NUM_TILES = NUM_ROWS * NUM_COLUMNS;
-const NUM_TRAY_TILES = 7;
-const BORDER_WIDTH = 1;
 
-function tile(_isFree, _character, _score) {
+function tile(_id, _isFree, _character, _score) {
+	this.id = _id;
 	this.isFree = _isFree;
 	this.letter = {
 		character: _character,
 		score: _score
 	}
+	//$("#" + this.id).html("<p>" + this.letter.character + "</p>");
 };
 
 var Board = (function() {
 
 	// Private
-	var rowEntries = new Array();
-	var columnEntries = new Array();
 	var tileMap = new Map();
 
 	// Public
@@ -25,6 +20,10 @@ var Board = (function() {
 		getTile: function(_row, _column) {
 			let id = "tile" + _row + _column;
 			return tileMap.get(id);
+		},
+
+		getTileById: function(_id) {
+			return tileMap.get(_id);
 		},
 
 		getTileVacancy: function(_row, _column) {
@@ -37,9 +36,13 @@ var Board = (function() {
 			return tileMap.get(id).letter;
 		},
 
+		getTileLetterById: function(_id) {
+			return tileMap.get(_id).letter;
+		},
+
 		getTrayTile: function(_number) {
 			let id = "tray-tile" + _number;
-			return tileMap.get(id)
+			return tileMap.get(id);
 		},
 
 		getTrayTileLetter: function(_number) {
@@ -47,18 +50,29 @@ var Board = (function() {
 			return tileMap.get(id).letter;
 		},
 
-		tileMoved: function(target_id, source_id) {
-			setTile(target_id, getTile(source_id));
+		tileMoved: function(source_id, target_id) {
+			this.setTileById(target_id, this.getTileById(source_id));
 		},
 
-		setTile(_row, _column, _tile) {
+		setTile: function(_row, _column, _tile) {
 			let id = "tile" + _row + _column;
 			tileMap.set(id, _tile);
+			var char = this.getTileLetter(_row, _column).character;
+			if (char != null) $("#" + id).html("<p>" + char + "</p>");
 		},
 
-		setTrayTile(_number, _tile) {
+		setTileById: function(_id, _tile) {
+			tileMap.set(_id, _tile);
+			var char = _tile.letter.character;
+			console.log(_id + " -- character: " + char);
+			if (char) $("#" + _id).html("<p>" + char + "</p>");
+		},
+
+		setTrayTile: function(_number, _tile) {
 			let id = "tray-tile" + _number;
 			tileMap.set(id, _tile);
+			var char = _tile.letter.character;
+			if (char) $("#" + id).html("<p>" + char + "</p>");
 		}
 	};
 
@@ -70,7 +84,9 @@ var Game = (function () {
 	return{
 		startTurn: function() {
 			for (let i = 0; i < NUM_TRAY_TILES; i++) {
-				$("#tray-tile" + i ).draggable();
+				$("#tray-tile" + i ).draggable({
+					revert: true
+				});
 			}
 		}
 	};

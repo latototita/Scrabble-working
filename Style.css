@@ -1,0 +1,27 @@
+#board {
+	width: 50%;
+	border-style: solid;
+	border-color: black; 
+}
+
+.row {
+	width: 100%;
+	border-top-style: solid;
+	border-top-width: 1px;
+	border-top-color: black;
+	background: green;
+}
+
+.tile {
+	width: 12%;
+	height: 12px;
+	float: left;
+	border-right-style: solid;
+	border-right-color: black;
+	border-right-width: 1px;
+	background: gray;
+}
+
+#tile88{
+	background: orange;
+}

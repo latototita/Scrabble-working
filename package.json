@@ -1,0 +1,32 @@
+{
+  "name": "scrabble_clone",
+  "version": "1.0.0",
+  "description": "A Scrabble clone with Node.js",
+  "main": "index.js",
+  "bin": {
+    "scrabble_clone": "server.js"
+  },
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bupenieks/Scrabble.git"
+  },
+  "keywords": [
+    "Scrabble"
+  ],
+  "author": "Ben Upenieks",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Bupenieks/Scrabble/issues"
+  },
+  "homepage": "https://github.com/Bupenieks/Scrabble#readme",
+  "dependencies": {
+    "express": "^4.15.3",
+    "socket.io": "^2.0.2"
+  }
+}

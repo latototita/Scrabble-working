@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Scrabble</title>
+
+	<link rel="stylesheet" type="text/css" href="Style.css">
+	<link rel="stylesheet" type="text/css" href="jquery-ui-1.12.1/jquery-ui.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.2/socket.io.js"></script>
+	<script>
+  var socket = io.connect('http://localhost:3000');
+  	socket.on('b', function (data) {
+    console.log(data);
+    console.log("worked!");
+    socket.emit('my other event', { my: 'data' });
+  });
+</script>
+
+</head>
+<body>
+	<div id="board"></div>
+	<div id="tray"></div>
+	
+</body>
+</html>

@@ -158,7 +158,7 @@ var BoardUtil = (function() {
 
 		tileMoved: function(_source, _target) {
 			if (DEBUG) console.log("tileMoved: \n    source: " + _source + ". target: " + _target);
-			this.setTile(_target, this.getTile(this.getIdFromArg(_source)));
+			this.setTile(_target, this.getTile(_source));
 			tileMap.delete(_source);
 		},
 
@@ -279,7 +279,7 @@ var BoardUtil = (function() {
 			if (DEBUG) console.log("parseCoordFromId arg: " + str);
 			for (var i = 4; i < str.length; i++) {	//indices specific to tile naming convention
 				var coord = parseInt(str.substring(i, str.length));
-				if (coord === NaN) continue;
+				if (isNaN(coord)) continue;
 				retArr.push(coord);
 				i += coord / 10 >= 1 ? 2 : 1; // one or two digits
 				if (++count >= 2) break;

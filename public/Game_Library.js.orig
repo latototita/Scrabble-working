@@ -30,12 +30,12 @@ socket.on('connect', function(){
 		$("#" + data.tileID).offset(BoardUtil.getOriginalOffset(data.tileID));
 	});
 
-	socket.on('setTileChar', function(data){
+	socket.on('setTrayTileChar', function(data){
 		BoardUtil.setTileChar(data.target, data.char);
 	});
 
 	socket.on('setTrayTileChar', function(data){
-		BoardUtil.setTrayTileChar(data.target, data.char);
+		BoardUtil.setTileChar(data.target, data.char);
 	});
 
 	socket.on('resetCurrentTurnTiles', function(data) {
@@ -162,23 +162,30 @@ var BoardUtil = (function() {
 			return offsetMap.get(target);
 		},
 
-		setTileChar: function(target, char) {
-			var targetId = this.getIdFromArg(target);
+<<<<<<< Updated upstream
+		getTrayTile: function(_target) {
+			var id = this.getIdFromArg(_target);
+			return tileMap.get(id)[0];
+		},
+		
+		getTrayTileCharacter: function(_target) {
+			return this.getTrayTile(_target).character;
+		}, 
+
+		tileMoved: function(_source, _target) {
+			if (DEBUG) console.log("tileMoved: \n    source: " + _source + ". target: " + _target);
+			this.setTile(_target, this.getTile(_source));
+			tileMap.delete(_source);
+=======
+		setTileChar: function(targetId, char) {
 			if (char != null) $("#" + targetId).html("<p>" + char + "</p>").show();
 			this.saveOffset(targetId);
+>>>>>>> Stashed changes
 		},
 
-		setTrayTileChar: function(target, char) {
-			var targetId = this.getIdFromArg(target);
-			if (char) $("#" + targetId).html("<p>" + char + "</p>").show();
+		setTrayTileChar: function(targetId, char) {
+			if (char) $("#" + id).html("<p>" + char + "</p>").show();
 			this.saveOffset(targetId);
-		},
-
-		tileMoved: function(source, target) {
-			if (DEBUG) console.log("tileMoved: \n    source: " + _source + ". target: " + _target);
-			this.setTileChar(target, this.getTile(_source));
-			tileMap.delete(this.getIdFromArg(_source));
-			this.swapCurTurnTiles(_source, _target);
 		},
 
 		setTileDraggable: function(_target) {
@@ -235,6 +242,7 @@ var BoardUtil = (function() {
 		tileDropped: function(sourceId, targetId) {	
 			console.log("Source: " + sourceId);
 			this.getDomFromArg(sourceId).offset(this.getOriginalOffset(sourceId));
+
 			this.setBlankSpace(sourceId);
 			this.setTileDraggable(targetId);
 
@@ -308,6 +316,36 @@ var BoardUtil = (function() {
 			return letter;
 		},
 
+  // sets up a linked list to evaluate words; only updates tiles used this turn;
+		updateAdjacentTiles: function() {
+			$("." + CURRENT_TILE_CLASS + ".board-tile").each(function() {
+
+				var obj    =  $(this),
+				    coords =  BoardUtil.getPosFromArg(obj),
+				    id     =  BoardUtil.getIdFromArg(obj),
+				    tile   =  BoardUtil.getTile(id),
+				    x      =  coords[0], y = coords[1];	
+
+				tile.up    =  (x != 1) ? BoardUtil.getTile([x - 1, y]) : null;
+				tile.down  = (x != 15) ? BoardUtil.getTile([x + 1, y]) : null;
+				tile.left  =  (y != 1) ? BoardUtil.getTile([x, y - 1]) : null;
+				tile.right = (y != 15) ? BoardUtil.getTile([x, y + 1]) : null;
+
+				if (tile.up) tile.up.down = tile;
+				if (tile.down) tile.down.up = tile;			// sets up bidirectional linked list
+				if (tile.left) tile.left.right = tile;	
+				if (tile.right) tile.right.left = tile;
+
+				if (DEBUG) {
+					console.log("updateAdjacentTiles: " + '\n' +
+								"   coords: " + x + " , " + y + '\n' +
+								"   arg: " + obj + '\n' +
+								"   result: ");
+					console.log(tile);
+				}
+			});
+		},
+
 		resetCurrentTurnTiles: function() {
 			var oldTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
 			oldTiles.draggable("disable");
@@ -327,6 +365,79 @@ var BoardUtil = (function() {
 			});
 			if (DEBUG) console.log("trayTileCount: " + count);
 			return NUM_TRAY_TILES - count;
+		},
+
+		/*
+		 * Count all tiles on board, ensure they are either in the same column or row,
+		 * check if all tiles are contiguous 
+		 *
+		 * Returns false if invalid placement OTHERWISE returns orientation as string
+		 */
+
+		evalutateTilePlacementValidity: function() {
+			var tilePos 	= [],
+				isCorrect	= false,
+			    isInRow 	= true, 
+			    isInColumn 	= true,
+			    tiles 		= $("." + CURRENT_TILE_CLASS + ".board-tile");
+
+			tiles.each(function() {
+				tilePos.push(BoardUtil.getPosFromArg($(this)));
+			});
+
+			tilePos.forEach((curVal, index, arr) => {
+				if (arr[0][0] != curVal[0]) {
+					isInRow = false;
+				}
+			});
+
+			if (!isInRow) {
+				tilePos.forEach((curVal, index, arr) => {
+					if (arr[0][1] != curVal[1]) {
+						isInColumn = false;
+					}
+				});
+			} else {isInColumn = false}
+
+			if (DEBUG) { 
+				console.log("evaluateTileValidity() : isInColumn: " + isInColumn + 
+								", isInRow: " + isInRow);
+			}
+
+			if (!isInColumn && !isInRow) return false;
+
+			var count    = 0;
+			var traverse = this.getTile(tiles);
+
+			if (isInRow) {
+				while (traverse.left) {
+					traverse = traverse.left;		// go all the way left then all the way right in linked list --
+				}									// we don't know where in the chain we started
+				while (traverse) {
+					if ($("#" + traverse.id).hasClass(CURRENT_TILE_CLASS)) count++;
+					traverse = traverse.right;		
+				}
+			} else {
+				while (traverse.up) {
+					traverse = traverse.up;
+				}									// up then down
+				while(traverse) {
+					if ($("#" + traverse.id).hasClass(CURRENT_TILE_CLASS)) count++;
+					traverse = traverse.down;
+				}
+			}
+
+			var numCurTilesOnBoard = this.numCurTilesOnBoard();
+			if (count < numCurTilesOnBoard) {
+				if (DEBUG) console.log("evaluateTilePlacementValidity(): iterative count less than actual count");
+				return false;
+			}
+			if (DEBUG && count > numCurTilesOnBoard) { 
+				console.log("Board.evaluateTilePlacementValidity()" + '\n' +
+					"Iterative count greater than actual tile count. Something is very wrong!");
+			}
+
+			return isInRow ? "row" : "column";
 		}
 	};
 
@@ -369,6 +480,84 @@ var Game = (function () {
 			alert(totalScore);
 		},
 	// TODO
-}
+		isWord: function(word) {
+			return true;
+		},
 
+		calcScore: function(tileAlignment) {  // Row or column?
+			var score = { val: 0 }; // so we can pass as reference to recursive calls
+			var traverse = BoardUtil.getTile($("." + CURRENT_TILE_CLASS + ".board-tile"));
+
+			if (tileAlignment === "row") {
+				while (traverse.left) traverse = traverse.left;
+			} else if (tileAlignment === "column") {
+				while (traverse.up) traverse = traverse.up;
+			} else {
+				console.log("Game.calcScore() --> tileAlignment argument is invalid: " + tileAlignment)
+			}
+
+			var wordList = [""];
+
+			var result = this.calcScoreNittyGritty(traverse, tileAlignment, score, wordList);
+
+			if (!(result === true)) {
+				alert("Invalid word: " + result);
+				return false;
+			}
+
+			/*
+			 *	TODO: add html elements to display total score, words created this turn, maybe a word history...
+			 */
+
+			totalScore += score.val;
+			alert("totalScore: " + totalScore);
+			return true;
+		},
+
+	// returns true if all words are valid, OTHERWISE returns the invalid word
+		calcScoreNittyGritty: function(curTile, alignment, score, wordList) {
+
+			if (!curTile) {
+				var parallelWord = wordList[0];
+				if (parallelWord != "" && !this.isWord(parallelWord)) return parallelWord;
+				return true;
+			}
+
+			var traverse = curTile;
+			var perpWord = "";
+
+			if (alignment === "row") {
+				while (traverse.up) traverse = traverse.up;
+				if ((traverse != curTile || curTile.down) && $("#" + curTile.id).hasClass(CURRENT_TILE_CLASS)) {  
+					while (traverse) {							// if there is a column of tiles for				   				
+						perpWord += traverse.character;			// current tile -- a vertical word exists
+						score.val += traverse.score;			// also checks if the current tile is a tile placed on this turn
+						traverse = traverse.down;
+					}
+				}
+			} else {
+				while (traverse.left) traverse = traverse.left;
+				if ((traverse != curTile || curTile.right) && $("#" + curTile.id).hasClass(CURRENT_TILE_CLASS)) { 
+					while (traverse) {						// same check as above but for rows perpendicular to placed tiles    				
+						perpWord += traverse.character;
+						score.val += traverse.score;
+						traverse = traverse.right;
+					}
+				}
+			}
+
+			if (perpWord != "") {
+				if(!this.isWord(perpWord)) return perpWord;
+				wordList.push(perpWord);
+			}
+			  
+			wordList[0] += curTile.character;  // wordList[0] is the parallel word  
+			score.val += curTile.score;
+			
+			if (alignment == "row")
+				return this.calcScoreNittyGritty(curTile.right, alignment, score, wordList);
+			if (alignment == "column")
+				return this.calcScoreNittyGritty(curTile.down, alignment, score, wordList);
+		}
+	};
 })();

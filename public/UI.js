@@ -5,3 +5,6 @@ $(window).resize(function() {
 })
 
 
+$(document).ready(function(){
+	UI.init();
+});

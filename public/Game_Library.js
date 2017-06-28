@@ -31,11 +31,11 @@ socket.on('connect', function(){
 	});
 
 	socket.on('setTileChar', function(data){
-		BoardUtil.setTileChar(data.target, data.char);
+		BoardUtil.setTileChar(data.targetId, data.char);
 	});
 
 	socket.on('setTrayTileChar', function(data){
-		BoardUtil.setTrayTileChar(data.target, data.char);
+		BoardUtil.setTrayTileChar(data.targetId, data.char);
 	});
 
 	socket.on('resetCurrentTurnTiles', function(data) {
@@ -57,6 +57,20 @@ function tile(_id, _character, _score) {
 	this.right = null,
 	this.down = null
 };
+
+var Game = (function() {
+	return {
+		startGame : function() {
+			$(document).ready(function() {
+				socket.emit("startTurn", {});
+			});
+		}, 
+
+		endTurn : function() {
+			socket.emit("endTurn", {});
+		}
+	}
+})();
 
 var UI = (function() {
 
@@ -332,43 +346,3 @@ var BoardUtil = (function() {
 
 })();
 
-var Game = (function () {
-
-	var numCurTilesOnBoard,
-	    totalScore = 0,
-	    isCurrentTurn;
-
-	//public
-	return{
-
-		startTurn: function() {
-			BoardUtil.setNextTurnTiles();
-			isCurrentTurn = true;
-		},
-
-		endTurn: function() {
-
-			if(!(numCurTilesOnBoard = BoardUtil.numCurTilesOnBoard())) {
-				alert("No tiles placed");
-				return;
-			}
-
-			BoardUtil.updateAdjacentTiles();
-
-			var tileAlignment = BoardUtil.evalutateTilePlacementValidity();
-			if (!(tileAlignment)) {
-				alert("Tile placement invalid");
-				return;
-			}
-
-			this.calcScore(tileAlignment);
-			var oldTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
-			oldTiles.draggable("disable");
-			oldTiles.removeClass(CURRENT_TILE_CLASS);
-			isCurrentTurn = false;
-			alert(totalScore);
-		},
-	// TODO
-}
-
-})();

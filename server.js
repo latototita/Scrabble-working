@@ -21,7 +21,7 @@ var GameState;
 io.sockets.on('connection', function(socket) {
 	console.log("new connection: " + socket.id);
 	clients.push(socket);
-	if (clients.length == 3) {
+	if (clients.length == 2) {
 		GameState = require('./lib/game_state.js')(io, clients);
 		GameState.startGame();
 	}

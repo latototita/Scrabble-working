@@ -6,6 +6,8 @@ const BORDER_WIDTH = 1;
 const DEBUG = true;
 const CURRENT_TILE_CLASS = "current-turn-tiles";
 
+var isCurrentTurn = true;
+
 var socket = io.connect('http://localhost:3000');
 socket.on('connect', function(){
 
@@ -15,20 +17,22 @@ socket.on('connect', function(){
 		UI.init();
 	});
 
-	socket.on('tile_drag_received', function(data) {
+	/*socket.on('tile_drag_received', function(data) {
 		if (DEBUG) console.log("tile drag received: " + data);
 		data.left *= $(window).width();
 		data.top *= $(window).width();
+		console.log(data.tileId);
 		$("#" + data.tileId).offset(data);
-	});
+	});*/
 
 	socket.on("tileDropped", function(data) {
+		if ($("#" + data.sourceId).hasClass('tray-tile')) return;
 		BoardUtil.tileDropped(data.sourceId, data.targetId);
 	});
 
-	socket.on('stopped_dragging_received', function(data) {
+	/*socket.on('stopped_dragging_received', function(data) {
 		$("#" + data.tileID).offset(BoardUtil.getOriginalOffset(data.tileID));
-	});
+	});*/
 
 	socket.on('setTileChar', function(data){
 		BoardUtil.setTileChar(data.targetId, data.char);
@@ -45,7 +49,13 @@ socket.on('connect', function(){
 	socket.on('setNextTurnTiles', function(data) {
 		BoardUtil.setNextTurnTiles();
 	});
-			
+
+	for (var event in ["startTurn", "endTurn", "isIdle"]) {
+		socket.on(event, function(data) {
+			isCurrentTurn = data.isCurrentTurn;
+			console.log("Turn status: " + isCurrentTurn);
+		});
+	}	
 });
 
 function tile(_id, _character, _score) {
@@ -207,7 +217,7 @@ var BoardUtil = (function() {
 				});
 
 				element.draggable({
-					drag: function (event, ui) {
+					drag: function (event, ui) {//TODO
 						console.log("dragging");
 						var coord = $(this).offset();
 						coord.left /= $(window).width();
@@ -220,7 +230,7 @@ var BoardUtil = (function() {
 					}, 
 
 					stop: function (event, ui) {
-						socket.emit('stopped_dragging_received', {
+						socket.emit('stopped_dragging_received', { //TODO
 							tileID: BoardUtil.getIdFromArg($(this))
 						});
 					}
@@ -234,6 +244,8 @@ var BoardUtil = (function() {
 			element = this.getDomFromArg(_target);
 			element.droppable({
 				drop: function(event, ui) {
+					if ($(this).text()) return;
+
 					var sourceId = ui.draggable.attr('id');
 					var targetId = $(this).attr('id');
 
@@ -250,7 +262,9 @@ var BoardUtil = (function() {
 			console.log("Source: " + sourceId);
 			this.getDomFromArg(sourceId).offset(this.getOriginalOffset(sourceId));
 			this.setBlankSpace(sourceId);
-			this.setTileDraggable(targetId);
+			if (isCurrentTurn) {
+				this.setTileDraggable(targetId);
+			}
 
 			console.log(sourceId + " dropped. "
 				+ targetId + " now draggable");
@@ -258,7 +272,10 @@ var BoardUtil = (function() {
 
 		setBlankSpace: function(_target) {
 			var element = this.getDomFromArg(_target);
-			element.html("").draggable("disable");
+			if (element.draggable("instance")) {
+				element.draggable("disable");
+			}
+			element.html("");
 			element.removeClass(CURRENT_TILE_CLASS);
 		},
 

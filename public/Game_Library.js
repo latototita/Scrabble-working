@@ -56,6 +56,19 @@ socket.on('connect', function(){
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	}	
+
+	socket.on("startTurn", function(data) {
+			isCurrentTurn = data.isCurrentTurn;
+			console.log("Turn status: " + isCurrentTurn);
+		});
+	socket.on("endTurn", function(data) {
+			isCurrentTurn = data.isCurrentTurn;
+			console.log("Turn status: " + isCurrentTurn);
+		});
+	socket.on("isIdle", function(data) {
+			isCurrentTurn = data.isCurrentTurn;
+			console.log("Turn status: " + isCurrentTurn);
+		});
 });
 
 function tile(_id, _character, _score) {
@@ -175,7 +188,11 @@ var BoardUtil = (function() {
 
 		saveOffset: function(target) {
 			targetId = this.getIdFromArg(target);
-			offsetMap.set(targetId, this.getDomFromArg(targetId).offset());
+			var oSet = this.getDomFromArg(targetId).offset();
+			offsetMap.set(targetId, {
+				top: oSet.top / $(window).width(),
+				left: oSet.left / $(window).width()
+			});
 		},
 
 		hasTile: function(tile) {
@@ -183,7 +200,11 @@ var BoardUtil = (function() {
 		},
 
 		getOriginalOffset: function(target) {
-			return offsetMap.get(target);
+			var offset = offsetMap.get(target);
+			return {
+				top: offset *= $(window).width(),
+				left: offset *= $(window).width()
+			}
 		},
 
 		setTileChar: function(target, char) {

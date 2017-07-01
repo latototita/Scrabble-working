@@ -6,7 +6,7 @@ const BORDER_WIDTH = 1;
 const DEBUG = true;
 const CURRENT_TILE_CLASS = "current-turn-tiles";
 
-var isCurrentTurn = true;
+var isCurrentTurn = false;
 
 var socket = io.connect('http://localhost:3000');
 socket.on('connect', function(){
@@ -81,7 +81,7 @@ function tile(_id, _character, _score) {
 	this.down = null
 };
 
-var Game = (function() {
+var Game = (function(player) {
 	return {
 		startGame : function() {
 			$(document).ready(function() {
@@ -90,6 +90,7 @@ var Game = (function() {
 		}, 
 
 		endTurn : function() {
+			console.log("HEre");
 			socket.emit("endTurn", {});
 		}
 	}
@@ -105,7 +106,7 @@ var UI = (function() {
 				boardEl.append("<div id='row" + i + "' class='row'></div>");
 				var curRow = boardEl.children("#row" + i);
 				for (var j = 0; j < NUM_COLUMNS; j++) {
-					var id = 'tile' + (i+1) + "-" + (j+1);
+					var id = 'tile' + (i) + "-" + (j);
 					curRow.append("<div id='" + id + "' class='tile board-tile'></div>");
 				} 
 				BoardUtil.setTileDroppable(curRow.find(".tile"));
@@ -368,7 +369,9 @@ var BoardUtil = (function() {
 
 		setNextTurnTiles: function() {
 			var tray = $("#tray > div");
-			this.setTileDraggable(tray);
+			if(isCurrentTurn) {
+				this.setTileDraggable(tray);
+			}
 			tray.addClass(CURRENT_TILE_CLASS);
 		},
 

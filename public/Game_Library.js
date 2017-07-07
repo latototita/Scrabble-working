@@ -50,19 +50,14 @@ socket.on('connect', function(){
 		BoardUtil.setNextTurnTiles();
 	});
 
-	for (var event in ["startTurn", "endTurn", "isIdle"]) {
-		socket.on(event, function(data) {
-			isCurrentTurn = data.isCurrentTurn;
-			console.log("Turn status: " + isCurrentTurn);
-		});
-	}	
-
 	socket.on("startTurn", function(data) {
 			isCurrentTurn = data.isCurrentTurn;
+			BoardUtil.setNextTurnTiles();
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	socket.on("endTurn", function(data) {
 			isCurrentTurn = data.isCurrentTurn;
+			BoardUtil.resetCurrentTurnTiles();
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	socket.on("isIdle", function(data) {
@@ -90,7 +85,6 @@ var Game = (function(player) {
 		}, 
 
 		endTurn : function() {
-			console.log("HEre");
 			socket.emit("endTurn", {});
 		}
 	}
@@ -188,7 +182,9 @@ var BoardUtil = (function() {
 	return {
 
 		saveOffset: function(target) {
+			console.log(target);
 			targetId = this.getIdFromArg(target);
+			console.log(targetId);
 			var oSet = this.getDomFromArg(targetId).offset();
 			offsetMap.set(targetId, {
 				top: oSet.top / $(window).width(),
@@ -362,7 +358,7 @@ var BoardUtil = (function() {
 		},
 
 		resetCurrentTurnTiles: function() {
-			var oldTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
+			var oldTiles = $("." + CURRENT_TILE_CLASS);
 			oldTiles.draggable("disable");
 			oldTiles.removeClass(CURRENT_TILE_CLASS);
 		},

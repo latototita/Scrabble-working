@@ -384,24 +384,23 @@ var BoardUtil = (function() {
 			if (!isCurrentTurn) return;
 			var currentTurnTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
 
-			var callback = (function(boardTiles){
+			var callback = function(boardTile){
 				var index = 0
 				return {
 					call: function() {
 						if ($(this).html() == "")  {
-							var element = boardTiles[index++];
-							console.log(element);
-							console.log(element.innerhtml);
-							$(this).html("<p>" + element.innerhtml + "<p>");
-							element.innerhtml = "";
-							console.log($(this).html());
+							$(this).html(boardTile.html());
+							boardTile.html("");
 						}
 					}	
 				}
-			})(currentTurnTiles);
+			};
 
-
-			$("#tray > div").each(callback.call);
+			currentTurnTiles.each(function() {
+				var element = $(this);
+				var func = callback(element);
+				$("#tray > div").each(func.call);
+			});
 
 			socket.emit("returnToTray", {});
 			

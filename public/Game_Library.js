@@ -56,8 +56,10 @@ socket.on('connect', function(){
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	socket.on("endTurn", function(data) {
+			UI.updateScore(data.score);
 			isCurrentTurn = data.isCurrentTurn;
 			BoardUtil.resetCurrentTurnTiles();
+			
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	socket.on("isIdle", function(data) {
@@ -141,6 +143,17 @@ var UI = (function() {
 			tray.css('height', rowHeight);
 			tray.css('width', (tileWidth + BORDER_WIDTH) * NUM_TRAY_TILES);
 		},
+
+		updateScore: function(totalScore) {
+			var scoreElement;
+			if (isCurrentTurn) {
+				scoreElement = $(".scores #your-score");
+			} else {
+				scoreElement = $(".scores #opponent-score");
+			}
+
+			scoreElement.html(totalScore);
+		}
 
 
 	}
@@ -367,7 +380,7 @@ var BoardUtil = (function() {
 
 		resetCurrentTurnTiles: function() {
 			var oldTiles = $("." + CURRENT_TILE_CLASS);
-			oldTiles.draggable("disable");
+			if (oldTiles.draggable("instance")) oldTiles.draggable("disable");
 			oldTiles.removeClass(CURRENT_TILE_CLASS);
 		},
 

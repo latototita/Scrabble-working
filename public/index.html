@@ -11,9 +11,17 @@
 <body>
 	<div id="board"></div>
 	<div id="tray"></div>
+	<ul class="scores">
+		<li>
+			Your Score: <span id="your-score">0</span>
+		</li>
+		<li>
+			Opponent's Score: <span id="opponent-score">0</span>
+		</li>
+	</ul>
 	<button id="start-turn" onclick="Game.startGame()">Start Turn</button>
 	<button id="end-turn" onclick="Game.endTurn()">End Turn</button>
-	<button id="end-turn" onclick="BoardUtil.returnToTray()">End Turn</button>
+	<button id="end-turn" onclick="BoardUtil.returnToTray()">Reset Tiles</button>
 	
 
 	<script type="text/javascript" src="jquery.js"></script>

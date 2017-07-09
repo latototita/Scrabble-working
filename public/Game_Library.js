@@ -378,8 +378,35 @@ var BoardUtil = (function() {
 			});
 			if (DEBUG) console.log("trayTileCount: " + count);
 			return NUM_TRAY_TILES - count;
-		}
-	};
+		},
+
+		returnToTray: function() {
+			if (!isCurrentTurn) return;
+			var currentTurnTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
+
+			var callback = (function(boardTiles){
+				var index = 0
+				return {
+					call: function() {
+						if ($(this).html() == "")  {
+							var element = boardTiles[index++];
+							console.log(element);
+							console.log(element.innerhtml);
+							$(this).html("<p>" + element.innerhtml + "<p>");
+							element.innerhtml = "";
+							console.log($(this).html());
+						}
+					}	
+				}
+			})(currentTurnTiles);
+
+
+			$("#tray > div").each(callback.call);
+
+			socket.emit("returnToTray", {});
+			
+		},
+	}
 
 })();
 

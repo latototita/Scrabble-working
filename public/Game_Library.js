@@ -64,6 +64,12 @@ socket.on('connect', function(){
 			isCurrentTurn = data.isCurrentTurn;
 			console.log("Turn status: " + isCurrentTurn);
 		});
+
+	socket.on("removeCurrentTurnTiles", function(data) {
+		for (var i = 0; i < data.boardTiles.length; i++) {
+			BoardUtil.setBlankSpace(data.boardTiles[i]);
+		}
+	});
 });
 
 function tile(_id, _character, _score) {
@@ -190,7 +196,7 @@ var BoardUtil = (function() {
 				top: oSet.top / $(window).width(),
 				left: oSet.left / $(window).width()
 			});
-		},
+		}, 
 
 		hasTile: function(tile) {
 			
@@ -205,15 +211,17 @@ var BoardUtil = (function() {
 		},
 
 		setTileChar: function(target, char) {
+			console.log("HERTERTe");
 			var targetId = this.getIdFromArg(target);
+			console.log("char: " + char + " | " + targetId);
 			if (char != null) $("#" + targetId).html("<p>" + char + "</p>").show();
-			this.saveOffset(targetId);
+			//this.saveOffset(targetId);
 		},
 
 		setTrayTileChar: function(target, char) {
 			var targetId = this.getIdFromArg(target);
 			if (char) $("#" + targetId).html("<p>" + char + "</p>").show();
-			this.saveOffset(targetId);
+			//this.saveOffset(targetId);
 		},
 
 		tileMoved: function(source, target) {
@@ -224,10 +232,10 @@ var BoardUtil = (function() {
 		},
 
 		setTileDraggable: function(_target) {
-
+			console.log("HERERERE");
 			element = this.getDomFromArg(_target);
 			if (element.draggable("instance")) {		// If there's already an instance,
-				element.draggable("enable");			// just enable.
+				element.draggable("enable");					// just enable.
 			} else {
 				element.draggable({
 					revert: true,
@@ -278,7 +286,7 @@ var BoardUtil = (function() {
 
 		tileDropped: function(sourceId, targetId) {	
 			console.log("Source: " + sourceId);
-			this.getDomFromArg(sourceId).offset(this.getOriginalOffset(sourceId));
+			//this.getDomFromArg(sourceId).offset(this.getOriginalOffset(sourceId));
 			this.setBlankSpace(sourceId);
 			if (isCurrentTurn) {
 				this.setTileDraggable(targetId);
@@ -382,15 +390,20 @@ var BoardUtil = (function() {
 
 		returnToTray: function() {
 			if (!isCurrentTurn) return;
-			var currentTurnTiles = $("." + CURRENT_TILE_CLASS + ".board-tile");
+			BoardUtil.setBlankSpace($("." + CURRENT_TILE_CLASS + ".board-tile"));
+			BoardUtil.setTileDraggable($("#tray > div"));
 
+/*
 			var callback = function(boardTile){
 				var index = 0
 				return {
 					call: function() {
 						if ($(this).html() == "")  {
+							console.log($(this));
 							$(this).html(boardTile.html());
-							boardTile.html("");
+							BoardUtil.setTileDraggable($(this));
+							BoardUtil.setBlankSpace(boardTile);
+							return false; // Stops looping through tray tiles.
 						}
 					}	
 				}
@@ -401,6 +414,7 @@ var BoardUtil = (function() {
 				var func = callback(element);
 				$("#tray > div").each(func.call);
 			});
+			*/
 
 			socket.emit("returnToTray", {});
 			

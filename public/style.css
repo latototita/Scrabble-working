@@ -24,19 +24,22 @@
 	border-right-style: solid;
 	border-right-color: black;
 	border-right-width: 1px;
-	background: gray;
+	background: #EBEBE0;
 	font-size: 50%;
 }
 
 #tile7-7{
-	background: orange;
+	background: #FFA800;
 }
 
 #tray {
 	margin: auto;
 	background: brown;
+	border-style: solid;
+	border-color: black;
+	border-width: 1px; 
 }
 
-.current-turn-tiles.board-tiles {
-	background: #FFFFFF;
+.current-turn-tiles.board-tile {
+	background: #FFC900;
 }

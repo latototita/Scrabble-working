@@ -51,16 +51,15 @@ socket.on('connect', function(){
 	});
 
 	socket.on("startTurn", function(data) {
-			isCurrentTurn = data.isCurrentTurn;
+			isCurrentTurn = true;
 			BoardUtil.setNextTurnTiles();
 			console.log("Turn status: " + isCurrentTurn);
 		});
 	socket.on("endTurn", function(data) {
-			UI.updateScore(data.score);
-			isCurrentTurn = data.isCurrentTurn;
-			BoardUtil.resetCurrentTurnTiles();
-			
+			UI.updateScore(data.score, data.thisTurnPlayerId);
+			BoardUtil.resetCurrentTurnTiles();		
 			console.log("Turn status: " + isCurrentTurn);
+			isCurrentTurn = false;
 		});
 	socket.on("isIdle", function(data) {
 			isCurrentTurn = data.isCurrentTurn;
@@ -93,7 +92,7 @@ var Game = (function(player) {
 		}, 
 
 		endTurn : function() {
-			socket.emit("endTurn", {});
+			socket.emit("endPress", {});
 		}
 	}
 })();
@@ -144,15 +143,16 @@ var UI = (function() {
 			tray.css('width', (tileWidth + BORDER_WIDTH) * NUM_TRAY_TILES);
 		},
 
-		updateScore: function(totalScore) {
+		updateScore: function(totalScore, playerId) {
 			var scoreElement;
-			if (isCurrentTurn) {
+			if (playerId === socket.id) {
 				scoreElement = $(".scores #your-score");
 			} else {
 				scoreElement = $(".scores #opponent-score");
 			}
 
 			scoreElement.html(totalScore);
+			console.log(isCurrentTurn);
 		}
 
 

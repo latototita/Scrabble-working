@@ -26,7 +26,7 @@ io.sockets.on('connection', function(socket) {
 		GameState.startGame();
 	}
 
-	socket.on("endTurn", function(data) {
+	socket.on("endPress", function(data) {
 		GameState.switchTurns();
 	}); 
 });

@@ -93,6 +93,10 @@ var Game = (function(player) {
 
 		endTurn : function() {
 			socket.emit("endPress", {});
+		},
+
+		emitBestWord: function() {
+			socket.emit("bestWord", {});
 		}
 	}
 })();

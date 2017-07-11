@@ -27,6 +27,7 @@
   "homepage": "https://github.com/Bupenieks/Scrabble#readme",
   "dependencies": {
     "express": "^4.15.3",
+    "python-shell": "^0.4.0",
     "socket.io": "^2.0.2"
   }
 }

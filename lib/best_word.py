@@ -1,5 +1,4 @@
-import sys
-import os
+import sys, os, json
 
 def getPermutations(word):
   def recurse(word, perms, retPerm = []):
@@ -28,7 +27,19 @@ def powerSet(word):
     return ans.union(psetRest)
   return ans
 
-a = getPermutations('abc')
-print(a)
+def hasCharacter(word):
+  for char in word[3:]:
+    if char is not ' ':
+      return True
+  return False
+
+
+sys.argv[:] = [word for word in sys.argv if hasCharacter(word)]
+
+for i in range(len(sys.argv)):
+  if i is 0: 
+    continue
+
+  print(sys.argv[i])
 
 sys.exit(0);

@@ -1,5 +1,5 @@
 import sys, os, json
-from itertools import takewhile, dropwhile
+from itertools import takewhile, dropwhile, filterfalse
 
 
 # Constants-----
@@ -34,6 +34,7 @@ def powerSet(word):
     return ans.union(psetRest)
   return ans
 
+
 def hasCharacter(word):
   for char in word[3:]:
     if char is not SPACE:
@@ -51,6 +52,43 @@ def isConnected(line):
   if charCount is not len(charString):
     return False
   return True
+
+
+# Yield (start, list[start:end])
+def subLists(length, line):
+  start = 0
+  end = 0
+  spaceCount = 0
+  
+  while spaceCount is not length and end < len(line):
+    if line[end] is SPACE:
+      spaceCount += 1
+    end += 1
+  
+  while line[end] is SPACE:
+    start += 1
+    end += 1
+  
+  while end < len(line) - 1 and line[end + 1] is not SPACE:
+    end += 1
+  
+  if spaceCount is length:
+    yield line[start:end + 1]
+    end += 1
+    while end < len(line):
+      while end < len(line) - 1 and line[end + 1] is not SPACE:
+        end += 1
+      if line[start] is SPACE:
+        start += 1
+      else:
+        while line[start] is not SPACE:
+          start += 1
+        start += 1
+      noSpaces = [i for i in filterfalse(lambda x: x is SPACE, line[start:end + 1])]
+      if len(noSpaces) is not 0:
+        yield line[start:end + 1]
+      end += 1
+
 
 sys.argv[:] = [word for word in sys.argv if hasCharacter(word)]
 sys.argv = sys.argv[1:] #Gets rid of unnecessary first arg

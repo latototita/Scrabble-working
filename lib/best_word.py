@@ -1,18 +1,21 @@
 import sys, os, json
-from itertools import takewhile, dropwhile, filterfalse
+from itertools import filterfalse, takewhile, dropwhile
 
-
-# Constants-----
 SPACE = ' '
-#---------------
+NUM_TRAY_TILES = 7
+
+def hasCharacter(word):
+  for char in word[3:]:
+    if char is not SPACE:
+      return True
+  return False
 
 def getPermutations(word):
   def recurse(word, perms, retPerm = []):
     if not word:
-      toAdd = ""
-      for char in retPerm:
-        toAdd += char
-      perms.add(toAdd)
+      toAdd = ''.join(char for char in retPerm)
+      if toAdd is not '':
+        perms.add(toAdd)
     for i in range(len(word)):
       retPerm += word[i]
       recurse(word[:i] + word[i+1:], perms)
@@ -35,75 +38,68 @@ def powerSet(word):
   return ans
 
 
-def hasCharacter(word):
-  for char in word[3:]:
-    if char is not SPACE:
-      return True
-  return False
+def subLists(length, lines):
+  for line in lines:
+    line = list(line)[3:]
 
-
-def isConnected(line):
-  charCount = 0
-  for char in line:
-    if char is not SPACE:
-      charCount += 1 
-  removedLeadingSpaces = [i for i in dropwhile(lambda x: x is SPACE, line)]
-  charString = [x for x in takewhile(lambda x: x is not SPACE, removedLeadingSpaces)]
-  if charCount is not len(charString):
-    return False
-  return True
-
-
-# Yield (start, list[start:end])
-def subLists(length, line):
-  start = 0
-  end = 0
-  spaceCount = 0
-  
-  while spaceCount is not length and end < len(line):
-    if line[end] is SPACE:
-      spaceCount += 1
-    end += 1
-  
-  while line[end] is SPACE:
-    start += 1
-    end += 1
-  
-  while end < len(line) - 1 and line[end + 1] is not SPACE:
-    end += 1
-  
-  if spaceCount is length:
-    yield line[start:end + 1]
-    end += 1
-    while end < len(line):
-      while end < len(line) - 1 and line[end + 1] is not SPACE:
-        end += 1
-      if line[start] is SPACE:
-        start += 1
-      else:
-        while line[start] is not SPACE:
-          start += 1
-        start += 1
-      noSpaces = [i for i in filterfalse(lambda x: x is SPACE, line[start:end + 1])]
-      if len(noSpaces) is not 0:
-        yield line[start:end + 1]
+    start = 0
+    end = -1
+    spaceCount = 0
+    firstCharReached = False
+    while spaceCount is not length and end < len(line) - 1:
       end += 1
+      if line[end] is SPACE:
+        spaceCount += 1
+      else:
+        firstCharReached = True
+      
+    while not firstCharReached:
+      end += 1
+      if (line[end] is not SPACE):
+        firstCharReached = True
+      else:
+        start += 1
+
+    while end < len(line) - 1 and line[end + 1] is not SPACE:
+      end += 1
+    
+    if spaceCount is length:
+      yield line[start:end + 1]
+      end += 1
+      while end < len(line):
+        while end < len(line) - 1 and line[end + 1] is not SPACE:
+          end += 1
+        if line[start] is SPACE:
+          start += 1
+        else:
+          while line[start] is not SPACE:
+            start += 1
+          start += 1
+        noSpaces = [i for i in filterfalse(lambda x: x is SPACE, line[start:end + 1])]
+        if len(noSpaces) is not 0:
+          yield line[start:end + 1]
+        end += 1
+
+def mergedLines(permutations, lines):
+  for perm in permutations:
+    for sliced in subLists(len(perm), lines):
+      index = 0
+      for i in range(len(sliced)):
+        if sliced[i] is SPACE:
+          sliced[i] = perm[index]
+          index += 1
+      yield sliced
 
 
 sys.argv[:] = [word for word in sys.argv if hasCharacter(word)]
-sys.argv = sys.argv[1:] #Gets rid of unnecessary first arg
-trayTiles = sys.argv[0];
-allPerms = [getPermutations(x) for x in powerSet(trayTiles)] 
-allPerms = [perm for sets in allPerms for perm in sets]
+# First element in sys.argv is junk
+trayTiles = sys.argv[1];
+allPerms = (getPermutations(x) for x in powerSet(trayTiles))
+allPerms = (perm for sets in allPerms for perm in sets)
 
-for word in sys.argv:
-  chars = list(word)
-  # Permute line
+print (sys.argv)
+for line in mergedLines(allPerms, sys.argv[2:]):
+  print (line)
 
-for i in range(len(sys.argv)):
-  if i is 0: 
-    continue
-
-  print(sys.argv[i])
 
 sys.exit(0);

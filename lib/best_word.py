@@ -3,6 +3,17 @@ from itertools import filterfalse, takewhile, dropwhile
 
 SPACE = ' '
 NUM_TRAY_TILES = 7
+print("TEST")
+
+
+dictionairy = set()
+with open("lib/word-list.txt", mode='r') as wordList:
+  for word in wordList:
+    dictionairy.add(word[:-1])
+
+def isWord(word):
+  if word in dictionairy:
+    return True
 
 def hasCharacter(word):
   for char in word[3:]:
@@ -88,7 +99,9 @@ def mergedLines(permutations, lines):
         if sliced[i] is SPACE:
           sliced[i] = perm[index]
           index += 1
-      yield sliced
+      word = ''.join(char for char in sliced)
+      if isWord(word.lower()):
+        yield word
 
 
 sys.argv[:] = [word for word in sys.argv if hasCharacter(word)]
@@ -97,7 +110,6 @@ trayTiles = sys.argv[1];
 allPerms = (getPermutations(x) for x in powerSet(trayTiles))
 allPerms = (perm for sets in allPerms for perm in sets)
 
-print (sys.argv)
 for line in mergedLines(allPerms, sys.argv[2:]):
   print (line)
 

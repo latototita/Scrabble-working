@@ -3,8 +3,6 @@ from itertools import filterfalse, takewhile, dropwhile
 
 SPACE = ' '
 NUM_TRAY_TILES = 7
-print("TEST")
-
 
 dictionairy = set()
 with open("lib/word-list.txt", mode='r') as wordList:
@@ -51,7 +49,8 @@ def powerSet(word):
 
 def subLists(length, lines):
   for line in lines:
-    line = list(line)[3:]
+    orientation = line[:3]
+    line = list(line)[3:] # removes location data
 
     start = 0
     end = -1
@@ -75,7 +74,7 @@ def subLists(length, lines):
       end += 1
     
     if spaceCount is length:
-      yield line[start:end + 1]
+      yield (start, orientation, line[start:end + 1])
       end += 1
       while end < len(line):
         while end < len(line) - 1 and line[end + 1] is not SPACE:
@@ -88,12 +87,12 @@ def subLists(length, lines):
           start += 1
         noSpaces = [i for i in filterfalse(lambda x: x is SPACE, line[start:end + 1])]
         if len(noSpaces) is not 0:
-          yield line[start:end + 1]
+          yield (start, orientation, line[start:end + 1])
         end += 1
 
 def mergedLines(permutations, lines):
   for perm in permutations:
-    for sliced in subLists(len(perm), lines):
+    for start, orientation, sliced in subLists(len(perm), lines):
       index = 0
       for i in range(len(sliced)):
         if sliced[i] is SPACE:
@@ -101,7 +100,7 @@ def mergedLines(permutations, lines):
           index += 1
       word = ''.join(char for char in sliced)
       if isWord(word.lower()):
-        yield word
+        yield (start, orientation, word)
 
 
 sys.argv[:] = [word for word in sys.argv if hasCharacter(word)]
@@ -110,7 +109,9 @@ trayTiles = sys.argv[1];
 allPerms = (getPermutations(x) for x in powerSet(trayTiles))
 allPerms = (perm for sets in allPerms for perm in sets)
 
-for line in mergedLines(allPerms, sys.argv[2:]):
+for start, orientation, line in mergedLines(allPerms, sys.argv[2:]):
+  print (start)
+  print (orientation)
   print (line)
 
 

@@ -71,6 +71,11 @@ socket.on('connect', function(){
 			BoardUtil.setBlankSpace(data.boardTiles[i]);
 		}
 	});
+
+	socket.on("bestWordSet", function(data) {
+		BoardUtil.setTileDraggable(data.targetId);
+		BoardUtil.setBlankSpace(data.sourceId);
+	});
 });
 
 function tile(_id, _character, _score) {
@@ -228,7 +233,6 @@ var BoardUtil = (function() {
 		},
 
 		setTileChar: function(target, char) {
-			console.log("HERTERTe");
 			var targetId = this.getIdFromArg(target);
 			console.log("char: " + char + " | " + targetId);
 			if (char != null) $("#" + targetId).html("<p>" + char + "</p>").show();

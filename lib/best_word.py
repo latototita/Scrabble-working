@@ -50,7 +50,7 @@ def powerSet(word):
 def subLists(length, lines):
 '''
 Generates strings such that characters in tray tile permutations can
-be swapped with spaces in yielded lists to create a full valid word.
+be swapped with spaces in yielded lists to create a full, valid, contiguous tile string.
 
 Args:
      length: Number of spaces to include (length of permutation intended to insert).

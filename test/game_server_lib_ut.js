@@ -192,6 +192,123 @@ describe("game library tests", () => {
         lib.BoardUtil.returnToTray(false);
         TearDown()
       });
+
+      it("return unconnected tiles", () => {
+        SetUp()
+        lib.BoardUtil.tileMoved(0, "tile7-1", false);
+        lib.BoardUtil.tileMoved(1, "tile1-1", false);
+        lib.BoardUtil.tileMoved(2, "tile9-9", false);
+        lib.BoardUtil.tileMoved(3, "tile13-10", false);
+        lib.BoardUtil.tileMoved(4, "tile6-11", false);
+
+        lib.BoardUtil.returnToTray(false);
+
+        var currentTurnTiles = lib.BoardUtil.getCurrentTurnTiles();
+        expect(currentTurnTiles.length).to.not.equal(0)
+        for (var i = 0; i < currentTurnTiles.length; i++) {
+          expect(currentTurnTiles[i].includes(mockPlayer.id)).to.equal(true);
+        }
+
+        for (var i = 7; i <= 11; i++) {
+          expect(lib.BoardUtil.getTile("tile7-" + i).character).to.equal(null)
+          expect(lib.BoardUtil.getTile("tile7-" + i).score).to.equal(null)
+        }
+        TearDown()
+      });
+    });
+
+
+    describe("evaluateTilePlacementValidity(): ", () => {
+      it("tests simple first line", () => {
+        SetUp()
+        lib.BoardUtil.tileMoved(0, "tile7-7", false);
+        lib.BoardUtil.tileMoved(1, "tile7-8", false);
+        lib.BoardUtil.tileMoved(2, "tile7-9", false);
+        lib.BoardUtil.tileMoved(3, "tile7-10", false);
+        lib.BoardUtil.tileMoved(4, "tile7-11", false);
+        lib.BoardUtil.updateAdjacentTiles();
+
+        var orientation = lib.BoardUtil.evaluateTilePlacementValidity();
+        expect(orientation).to.equal('row');
+        TearDown()
+      });
+
+      it("First single first tile ", () => {
+        SetUp()
+        lib.BoardUtil.tileMoved(0, "tile7-7", false);
+
+        var orientation = lib.BoardUtil.evaluateTilePlacementValidity();
+        expect(orientation).to.not.equal(false);
+        TearDown()
+      });
+
+      it("test invalid placement", () => {
+        SetUp()
+        lib.BoardUtil.tileMoved(0, "tile7-1", false);
+        lib.BoardUtil.tileMoved(1, "tile1-1", false);
+        lib.BoardUtil.tileMoved(2, "tile9-9", false);
+        lib.BoardUtil.tileMoved(3, "tile13-10", false);
+        lib.BoardUtil.tileMoved(4, "tile6-11", false);
+
+        var orientation = lib.BoardUtil.evaluateTilePlacementValidity();
+        expect(orientation).to.equal(false);
+        TearDown()
+      });
+
+      it("tests connection with other tiles", () => {
+        SetUp()
+        var t1 = lib.BoardUtil.getTile("tile7-6")
+        var e  = lib.BoardUtil.getTile("tile7-7")
+        var s  = lib.BoardUtil.getTile("tile7-8")
+        var t2 = lib.BoardUtil.getTile("tile7-9")
+
+        t1.right = e; e.left = t1;
+        e.right = s;  s.left = e;
+        s.right = t2; t2.left = s;
+
+        t1.character = 'T'
+        e.character  = "E"
+        s.character  = "S"
+        t2.character = "T"
+
+        lib.BoardUtil.tileMoved(0, "tile6-7", false);
+        lib.BoardUtil.tileMoved(1, "tile8-7", false);
+        lib.BoardUtil.tileMoved(2, "tile9-7", false);
+        lib.BoardUtil.tileMoved(3, "tile10-7", false);
+
+        lib.BoardUtil.updateAdjacentTiles();
+        var orientation = lib.BoardUtil.evaluateTilePlacementValidity();
+        expect(orientation).to.equal('column');
+        TearDown()
+      });
+
+      it("tests no connection with other tiles", () => {
+        SetUp()
+        var t1 = lib.BoardUtil.getTile("tile7-6")
+        var e  = lib.BoardUtil.getTile("tile7-7")
+        var s  = lib.BoardUtil.getTile("tile7-8")
+        var t2 = lib.BoardUtil.getTile("tile7-9")
+
+        t1.right = e; e.left = t1;
+        e.right = s;  s.left = e;
+        s.right = t2; t2.left = s;
+
+        t1.character = 'T'
+        e.character  = "E"
+        s.character  = "S"
+        t2.character = "T"
+
+        lib.BoardUtil.tileMoved(0, "tile1-7", false);
+        lib.BoardUtil.tileMoved(1, "tile2-7", false);
+        lib.BoardUtil.tileMoved(2, "tile3-7", false);
+        lib.BoardUtil.tileMoved(3, "tile4-7", false);
+
+        lib.BoardUtil.updateAdjacentTiles();
+        var orientation = lib.BoardUtil.evaluateTilePlacementValidity();
+        expect(orientation).to.equal(false);
+        TearDown()
+      });
+
     });
 
 });

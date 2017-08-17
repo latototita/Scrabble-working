@@ -1,10 +1,9 @@
-var resizeTimer;
+var resizeTimer
 $(window).resize(function() {
-	clearTimeout(resizeTimer);
-	resizeTimer = setTimeout(UI.resizeUI, 50);
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(UI.resizeUI, 50)
 })
 
-
-$(document).ready(function(){
-	UI.init();
-});
+$(document).ready(function() {
+  UI.init()
+})

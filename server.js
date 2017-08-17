@@ -1,3 +1,5 @@
+const NUM_REQUIRED_PLAYERS = 2
+
 var express = require('express'),
   socket = require('socket.io'),
   fs = require('fs'),
@@ -13,36 +15,38 @@ var app = express(),
 var GameStateLib = require('./lib/game_state.js')
 
 server.listen(3000)
-mongoose.connect('mongodb://localhost/test')
+mongoose.connect('mongodb://localhost/scrabble')
 
 app.use(express.static('public'))
 
-var db = mongoose.connection //FIXME
+var db = mongoose.connection
 var Game
 
 db.on('error', console.error.bind(console, 'connection error:'))
 db.once('open', function() {
-  var gameSchema = mongoose.Schema({
+  var playerSchema = new mongoose.Schema(
+    {
+      id: String,
+      name: String,
+      status: String
+    },
+    { _id: false }
+  )
+  var gameSchema = new mongoose.Schema({
     roomId: String,
     status: String,
-
-    players: [
-      mongoose.Schema(
-        {
-          id: String,
-          name: String,
-          status: String
-        },
-        { _id: false }
-      )
-    ]
+    players: [playerSchema]
   })
 
   gameSchema.methods.findByRoomId = function(room) {
     return this.find({ roomId: room })
   }
 
-  Game = mongoose.model('Game', new gameSchema())
+  gameSchema.methods.findPlayer = function(player) {
+    return this.find({ players: { $in: [player] } })
+  }
+
+  Game = mongoose.model('Game', gameSchema)
 })
 
 app.post('/start', function(req, res) {
@@ -94,7 +98,9 @@ app.post('/join/:room', function(req, res) {
         status: 'joined'
       }
 
-      Game.joinRoom(
+      // Must update database in one action to prevent
+      // errors from simultaneous connections
+      Game.findOneAndUpdate(
         {
           _id: game._id,
           'players.status': { $in: ['Open'] }
@@ -131,31 +137,49 @@ var numRooms = 0
 var rooms = {}
 
 io.sockets.on('connection', function(socket) {
-  var roomName = 'room'
-  if (url.pathname == '/') {
-    roomName += roomNumber
-  } else {
-    roomName += url.searchParams.get('room')
-  }
-  socket.join(roomName)
-  rooms.add(roomName)
+  var room, id, player
+
+  socket.on('join', data => {
+    Game.findByRoom(data.roomId, (err, game) => {
+      var playerCount = 0,
+        containsPlayer
+
+      if (game) {
+        id = game._id
+        room = game.roomId
+        player = data.player
+
+        pdata = game.findPlayer(player)
+
+        if (pdata.toArray().length > 1) {
+          console.log('Error: multiple games with the same player')
+        }
+
+        if (pdata) {
+          socket.join(room)
+          io.sockets.in(room).emit('joined')
+
+          game.players.forEach(p => {
+            if (p.status == 'joined') playerCount++
+          })
+
+          if (playerCount == NUM_REQUIRED_PLAYERS) {
+            game.save((err, game) => {
+              io.sockets.in(room).emit('ready')
+            })
+          }
+        }
+      }
+    })
+  })
+
+  console.log('new connection: ' + socket.id)
   clients.push(socket)
-
-  if (io.sockets.adapter.rooms[roomName].length == 2) {
-    numRooms++
-    GameState = GameStateLib(roomName, clients)
-    GameState.startGame()
-    clients = []
-  }
-
-  /*
-  console.log("new connection: " + socket.id);
-  clients.push(socket);
   if (clients.length == 2) {
-    GameState = require("./lib/game_state.js")(io, clients);
-    GameState.startGame();
+    GameState = require('./lib/game_state.js')(io, clients)
+    GameState.startGame()
   }
-*/
+
   socket.on('endPress', function(data) {
     GameState.switchTurns()
   })

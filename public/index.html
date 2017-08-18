@@ -23,11 +23,19 @@
 	<button id="end-turn" onclick="Game.endTurn()">End Turn</button>
 	<button id="return-tiles" onclick="BoardUtil.returnToTray()">Reset Tiles</button>
 	<button id="best-word" onclick="Game.emitBestWord()">Show Best Word</button>
+	<button id="connect" onclick="">Connect</button>
+
+	<form action="/join" method="post">
+  Game ID: <input type="text" name="room"><br>
+  <input type="submit" value="Connect">
+	</form>
+
+<p>Connect to a game with a provided ID</p>
 
 	<script type="text/javascript" src="jquery.js"></script>
 	<script type="text/javascript" src="jquery-ui-1.12.1/jquery-ui.js"></script>
 	<script type="text/javascript" src="Game_Library.js"></script>
 	<script type="text/javascript" src="UI.js"></script>
-	
+
 </body>
 </html>

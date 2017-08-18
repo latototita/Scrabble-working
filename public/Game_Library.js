@@ -7,6 +7,7 @@ const DEBUG = true
 const CURRENT_TILE_CLASS = 'current-turn-tiles'
 
 var isCurrentTurn = false
+var username = "THIS IS THE USERNAME"
 
 var socket = io.connect('http://localhost:3000')
 socket.on('connect', function() {
@@ -85,10 +86,14 @@ function tile(_id, _character, _score) {
 var Game = (function(player) {
   return {
     startGame: function() {
-      $(document).ready(function() {
-        socket.emit('startTurn', {})
-      })
-    },
+      $.ajax({
+        type: "POST",
+        url: "/start",
+        processData: false,
+        contentType: 'application/json',
+        data: JSON.stringify({'name': username}),
+        })
+      },
 
     endTurn: function() {
       socket.emit('endPress', {})
@@ -429,7 +434,7 @@ var BoardUtil = (function() {
 							BoardUtil.setBlankSpace(boardTile);
 							return false; // Stops looping through tray tiles.
 						}
-					}	
+					}
 				}
 			};
 

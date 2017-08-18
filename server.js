@@ -6,7 +6,8 @@ var express = require('express'),
   http = require('http'),
   url = require('url'),
   mongoose = require('mongoose'),
-  uniqid = require('uniqid')
+  uniqid = require('uniqid'),
+  bodyParser = require('body-parser')
 
 var app = express(),
   server = http.Server(app),
@@ -18,6 +19,8 @@ server.listen(3000)
 mongoose.connect('mongodb://localhost/scrabble')
 
 app.use(express.static('public'))
+app.use('/join', express.static('public'))
+app.use(bodyParser.json())
 
 var db = mongoose.connection
 var Game
@@ -38,7 +41,7 @@ db.once('open', function() {
     players: [playerSchema]
   })
 
-  gameSchema.methods.findByRoomId = function(room) {
+  gameSchema.statics.findByRoomId = function(room) {
     return this.find({ roomId: room })
   }
 
@@ -50,6 +53,7 @@ db.once('open', function() {
 })
 
 app.post('/start', function(req, res) {
+  console.log('Start received')
   var pid = uniqid(),
     roomId = uniqid(),
     players = [
@@ -72,6 +76,7 @@ app.post('/start', function(req, res) {
       players: players
     },
     (err, game) => {
+      console.log('Created room: ' + game.roomId)
       var data = game.toJSON()
       data.action = 'begin'
       data.player = pid + '-0'
@@ -80,52 +85,53 @@ app.post('/start', function(req, res) {
   )
 })
 
-app.post('/join/:room', function(req, res) {
+app.post('/join', function(req, res) {
+  console.log('Attempting to joing room: ' + req.query.room)
   var pid = uniqid(),
     player,
-    pidx
+    pidx,
+    game
 
-  Game.findByRoomId(req.params.room, (err, game) => {
-    if (err || !game) {
-      res.send(400, {
-        code: 'roomNotFound',
-        message: 'Failed to find the expected game room'
-      })
-    } else {
-      player = {
-        id: pid,
-        name: req.body.name,
-        status: 'joined'
+  if (game = Game.findByRoomId(req.query.room)) {
+    console.log('room found')
+    console.log('success')
+    player = {
+      id: pid,
+      name: req.body.name,
+      status: 'joined'
+    }
+
+    game = Game.findOneAndUpdate(
+      {
+        _id: game._id,
+        'players.status': { $in: ['Open'] }
+      },
+      {
+        $set: { 'players.$': player }
+      }
+    )
+
+    if (game) {
+      console.log('successfully joined room')
+      var data = {
+        'action': 'join',
+        'player': pid
       }
 
-      // Must update database in one action to prevent
-      // errors from simultaneous connections
-      Game.findOneAndUpdate(
-        {
-          _id: game._id,
-          'players.status': { $in: ['Open'] }
-        },
-        {
-          $set: { 'players.$': player }
-        },
-        (err, game) => {
-          var data
-          if (game) {
-            data.game.toJSON()
-            data.action = 'join'
-            data.player = pid
+      res.sendFile('public/index.html', {root: __dirname })
 
-            res.send(data)
-          } else {
-            res.send(400, {
-              code: 'gameFull',
-              message: 'All available player slots have been filled'
-            })
-          }
-        }
-      )
+    } else {
+      res.send(400, {
+        code: 'gameFull',
+        message: 'All available player slots have been filled'
+      })
     }
-  })
+  } else {
+    res.send(400, {
+      code: 'roomNotFound',
+      message: 'Failed to find the expected game room'
+    })
+  }
 })
 
 var clients = []
@@ -156,6 +162,7 @@ io.sockets.on('connection', function(socket) {
         }
 
         if (pdata) {
+          console.log('socket connected to room: ' + room)
           socket.join(room)
           io.sockets.in(room).emit('joined')
 

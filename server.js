@@ -7,7 +7,8 @@ var express = require('express'),
   url = require('url'),
   mongoose = require('mongoose'),
   uniqid = require('uniqid'),
-  bodyParser = require('body-parser')
+  bodyParser = require('body-parser'),
+  GameState = require('./lib/game_state.js')
 
 var app = express(),
   server = http.Server(app),
@@ -25,6 +26,7 @@ app.use(bodyParser.json())
 
 var db = mongoose.connection
 var Game
+var roomClientMap = new Map()
 
 db.on('error', console.error.bind(console, 'connection error:'))
 db.once('open', function() {
@@ -82,6 +84,7 @@ app.post('/start', function(req, res) {
       res.send(data)
     }
   )
+  roomClientMap.set(roomId, [])
 })
 
 app.post('/join', function(req, res) {
@@ -121,7 +124,8 @@ app.post('/join', function(req, res) {
             console.log(_game)
             var data = {
               _id: _game._id,
-              player: pid,
+              roomId: _game.roomId,
+              //player: pid,
               username: req.body.name
             }
             console.log(data)
@@ -149,23 +153,31 @@ var gameInstances = new Map()
 
 io.sockets.on('connection', function(socket) {
   socket.on('join', data => {
+    console.log(data)
+    console.log(roomClientMap)
+    console.log(data.roomId)
+    roomClientMap.get(data.roomId).push(socket);
     Game.findOne({ _id: data._id }).exec((err, game) => {
       if (err || !game) {
         console.log('Could not find room for socket')
       } else {
         var room = game.roomId
+        var GameStateInstance = GameState(io, room, roomClientMap.get(room))
         console.log('socket connected to room: ' + room)
         socket.join(room)
-        GameState = require('./lib/game_state.js')(io, clients)
-        GameState.startGame()
-        gameInstances.set(room, GameState)
+        GameStateInstance.startGame()
+        gameInstances.set(room, GameStateInstance)
+
       }
     })
   })
 
   socket.on('endPress', function(data) {
-    GameState.switchTurns()
+    console.log("endPress: " + data.roomId)
+    if (gameInstances.has(data.roomId))
+    gameInstances.get(data.roomId).switchTurns()
   })
+
 })
 /*
   console.log('new connection: ' + socket.id)

@@ -8,6 +8,7 @@ const CURRENT_TILE_CLASS = 'current-turn-tiles'
 
 var isCurrentTurn = false
 var username = "THIS IS THE USERNAME"
+var roomId
 
 var socket = io.connect('http://localhost:3000')
 socket.on('connect', function() {
@@ -84,6 +85,8 @@ function tile(_id, _character, _score) {
 }
 
 var Game = (function(player) {
+  var roomId
+
   return {
     startGame: function() {
       $.ajax({
@@ -92,11 +95,20 @@ var Game = (function(player) {
         processData: false,
         contentType: 'application/json',
         data: JSON.stringify({'name': username}),
-        })
+        success: function(data, status, jqXHR) {
+          roomId = data.roomId
+          socket.emit('join', {
+            'roomId': data.roomId,
+            '_id': null
+          })
+        }
+      })
       },
 
     endTurn: function() {
-      socket.emit('endPress', {})
+      console.log ("Client endpress: " + roomId)
+      if (roomId)
+        socket.emit('endPress', {roomId: roomId})
     },
 
     emitBestWord: function() {
@@ -117,9 +129,11 @@ var Game = (function(player) {
         }),
         success: function(data, status, jqXHR) {
           console.log(data)
+          roomId = data.roomId
           socket.emit('join', {
             '_id': data._id,
-            'pid': data.player,
+            'roomId': data.roomId,
+            //'pid': data.pid,
             'username': data.username,
           });
         }

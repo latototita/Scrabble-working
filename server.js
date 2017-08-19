@@ -59,18 +59,16 @@ app.post('/start', function(req, res) {
   console.log('Start received')
   var pid = uniqid(),
     roomId = uniqid(),
-    player1 =
-      {
-        id: pid + '-0',
-        name: req.body.name,
-        status: 'Joined'
-      },
-    player2 =
-      {
-        id: pid + '-1',
-        name: 'NULL',
-        status: 'Open'
-      }
+    player1 = {
+      id: pid + '-0',
+      name: req.body.name,
+      status: 'Joined'
+    },
+    player2 = {
+      id: pid + '-1',
+      name: 'NULL',
+      status: 'Open'
+    }
 
   Game.create(
     {
@@ -81,7 +79,7 @@ app.post('/start', function(req, res) {
     (err, game) => {
       console.log('Created room: ' + game.roomId)
       var data = {
-        roomId : game.roomId,
+        roomId: game.roomId,
         _id: game._id
       }
       res.send(data)
@@ -111,33 +109,25 @@ app.post('/join', function(req, res) {
         status: 'Joined'
       }
 
-            console.log('successfully joined room')
-            var gameFound = false;
-            if (game.player2.status == 'Open') {
-              game.player2 = player;
-              game.save();
-              var data = {
-                _id: game._id,
-                roomId: game.roomId,
-                //player: pid,
-                username: req.body.name
-              }
-              res.send(data)
-            } else {
-              res.status(400).send({
-                code: 'gameFull',
-                message: 'All available player slots have been filled'
-              })
-            }
-
-
-          }
-
-
-
-
-
-
+      console.log('successfully joined room')
+      var gameFound = false
+      if (game.player2.status == 'Open') {
+        game.player2 = player
+        game.save()
+        var data = {
+          _id: game._id,
+          roomId: game.roomId,
+          //player: pid,
+          username: req.body.name
+        }
+        res.send(data)
+      } else {
+        res.status(400).send({
+          code: 'gameFull',
+          message: 'All available player slots have been filled'
+        })
+      }
+    }
   })
 })
 
@@ -152,31 +142,29 @@ var gameInstances = new Map()
 
 io.sockets.on('connection', function(socket) {
   socket.on('join', data => {
-
-    roomClientMap.get(data.roomId).push(socket);
-      Game.findOne(
-      { _id: data._id },
-      (err, game) => {
-        if (err || !game) {
-          console.log('Could not find room for socket')
-        } else {
-          var room = game.roomId
-          var pCount = 0
-          console.log('socket connected to room: ' + room)
-          socket.join(room)
-          if (game.player1.status == 'Joined' && game.player2.status == 'Joined') {
-
-            var GameStateInstance = GameState(io, room, roomClientMap.get(room))
-            GameStateInstance.startGame()
-            gameInstances.set(room, GameStateInstance)
-          }
+    roomClientMap.get(data.roomId).push(socket)
+    Game.findOne({ _id: data._id }, (err, game) => {
+      if (err || !game) {
+        console.log('Could not find room for socket')
+      } else {
+        var room = game.roomId
+        var pCount = 0
+        console.log('socket connected to room: ' + room)
+        socket.join(room)
+        if (
+          game.player1.status == 'Joined' &&
+          game.player2.status == 'Joined'
+        ) {
+          var GameStateInstance = GameState(io, room, roomClientMap.get(room))
+          GameStateInstance.startGame()
+          gameInstances.set(room, GameStateInstance)
         }
-      })
+      }
+    })
   })
 
   socket.on('endPress', function(data) {
     if (gameInstances.has(data.roomId))
       gameInstances.get(data.roomId).switchTurns()
   })
-
 })

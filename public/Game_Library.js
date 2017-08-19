@@ -11,73 +11,6 @@ var username = "THIS IS THE USERNAME"
 var roomId
 
 var socket = io.connect('http://localhost:3000')
-socket.on('connect', function() {
-  console.log('connected')
-
-  socket.on('initUI', function(data) {
-    UI.init()
-  })
-
-  /*socket.on('tile_drag_received', function(data) {
-		if (DEBUG) console.log("tile drag received: " + data);
-		data.left *= $(window).width();
-		data.top *= $(window).width();
-		console.log(data.tileId);
-		$("#" + data.tileId).offset(data);
-	});*/
-
-  socket.on('tileDropped', function(data) {
-    if ($('#' + data.sourceId).hasClass('tray-tile')) return
-    BoardUtil.tileDropped(data.sourceId, data.targetId)
-  })
-
-  /*socket.on('stopped_dragging_received', function(data) {
-		$("#" + data.tileID).offset(BoardUtil.getOriginalOffset(data.tileID));
-	});*/
-
-  socket.on('setTileChar', function(data) {
-    BoardUtil.setTileChar(data.targetId, data.char)
-  })
-
-  socket.on('setTrayTileChar', function(data) {
-    BoardUtil.setTrayTileChar(data.targetId, data.char)
-  })
-
-  socket.on('resetCurrentTurnTiles', function(data) {
-    BoardUtil.resetCurrentTurnTiles()
-  })
-
-  socket.on('setNextTurnTiles', function(data) {
-    BoardUtil.setNextTurnTiles()
-  })
-
-  socket.on('startTurn', function(data) {
-    isCurrentTurn = true
-    BoardUtil.setNextTurnTiles()
-    console.log('Turn status: ' + isCurrentTurn)
-  })
-  socket.on('endTurn', function(data) {
-    UI.updateScore(data.score, data.thisTurnPlayerId)
-    BoardUtil.resetCurrentTurnTiles()
-    console.log('Turn status: ' + isCurrentTurn)
-    isCurrentTurn = false
-  })
-  socket.on('isIdle', function(data) {
-    isCurrentTurn = data.isCurrentTurn
-    console.log('Turn status: ' + isCurrentTurn)
-  })
-
-  socket.on('removeCurrentTurnTiles', function(data) {
-    for (var i = 0; i < data.boardTiles.length; i++) {
-      BoardUtil.setBlankSpace(data.boardTiles[i])
-    }
-  })
-
-  socket.on('bestWordSet', function(data) {
-    BoardUtil.setTileDraggable(data.targetId)
-    BoardUtil.setBlankSpace(data.sourceId)
-  })
-})
 
 function tile(_id, _character, _score) {
   this.id = _id
@@ -486,3 +419,72 @@ var BoardUtil = (function() {
     }
   }
 })()
+
+
+socket.on('connect', function() {
+  console.log('connected')
+
+  socket.on('initUI', function(data) {
+    UI.init()
+  })
+
+  /*socket.on('tile_drag_received', function(data) {
+		if (DEBUG) console.log("tile drag received: " + data);
+		data.left *= $(window).width();
+		data.top *= $(window).width();
+		console.log(data.tileId);
+		$("#" + data.tileId).offset(data);
+	});*/
+
+  socket.on('tileDropped', function(data) {
+    if ($('#' + data.sourceId).hasClass('tray-tile')) return
+    BoardUtil.tileDropped(data.sourceId, data.targetId)
+  })
+
+  /*socket.on('stopped_dragging_received', function(data) {
+		$("#" + data.tileID).offset(BoardUtil.getOriginalOffset(data.tileID));
+	});*/
+
+  socket.on('setTileChar', function(data) {
+    BoardUtil.setTileChar(data.targetId, data.char)
+  })
+
+  socket.on('setTrayTileChar', function(data) {
+    BoardUtil.setTrayTileChar(data.targetId, data.char)
+  })
+
+  socket.on('resetCurrentTurnTiles', function(data) {
+    BoardUtil.resetCurrentTurnTiles()
+  })
+
+  socket.on('setNextTurnTiles', function(data) {
+    BoardUtil.setNextTurnTiles()
+  })
+
+  socket.on('startTurn', function(data) {
+    isCurrentTurn = true
+    BoardUtil.setNextTurnTiles()
+    console.log('Turn status: ' + isCurrentTurn)
+  })
+  socket.on('endTurn', function(data) {
+    UI.updateScore(data.score, data.thisTurnPlayerId)
+    BoardUtil.resetCurrentTurnTiles()
+    console.log('Turn status: ' + isCurrentTurn)
+    isCurrentTurn = false
+  })
+  socket.on('isIdle', function(data) {
+    isCurrentTurn = data.isCurrentTurn
+    console.log('Turn status: ' + isCurrentTurn)
+  })
+
+  socket.on('removeCurrentTurnTiles', function(data) {
+    for (var i = 0; i < data.boardTiles.length; i++) {
+      BoardUtil.setBlankSpace(data.boardTiles[i])
+    }
+  })
+
+  socket.on('bestWordSet', function(data) {
+    BoardUtil.setTileDraggable(data.targetId)
+    BoardUtil.setBlankSpace(data.sourceId)
+  })
+})

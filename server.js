@@ -40,7 +40,8 @@ db.once('open', function() {
   )
   var gameSchema = new mongoose.Schema({
     roomId: String,
-    players: [playerSchema]
+    player1: playerSchema,
+    player2: playerSchema
   })
 
   gameSchema.statics.findByRoomId = function(room) {
@@ -58,29 +59,31 @@ app.post('/start', function(req, res) {
   console.log('Start received')
   var pid = uniqid(),
     roomId = uniqid(),
-    players = [
+    player1 =
       {
         id: pid + '-0',
         name: req.body.name,
-        status: 'connected'
+        status: 'Joined'
       },
+    player2 =
       {
         id: pid + '-1',
         name: 'NULL',
         status: 'Open'
       }
-    ]
 
   Game.create(
     {
       roomId: roomId,
-      players: players
+      player1: player1,
+      player2: player2
     },
     (err, game) => {
       console.log('Created room: ' + game.roomId)
-      var data = game.toJSON()
-      data.action = 'begin'
-      data.player = pid + '-0'
+      var data = {
+        roomId : game.roomId,
+        _id: game._id
+      }
       res.send(data)
     }
   )
@@ -108,37 +111,33 @@ app.post('/join', function(req, res) {
         status: 'Joined'
       }
 
-      Game.findOneAndUpdate(
-        { _id: game._id },
-        { players: { $elemMatch: { status: 'Open' } } },
-        (err, _game) => {
-          if (_game) {
             console.log('successfully joined room')
-
-            for (p = 0; p < NUM_REQUIRED_PLAYERS; p++) {
-              if (_game.players[p].status == 'Open') {
-                console.log('SDFASDFASDF')
-                _game.players[p] = player
+            var gameFound = false;
+            if (game.player2.status == 'Open') {
+              game.player2 = player;
+              game.save();
+              var data = {
+                _id: game._id,
+                roomId: game.roomId,
+                //player: pid,
+                username: req.body.name
               }
+              res.send(data)
+            } else {
+              res.status(400).send({
+                code: 'gameFull',
+                message: 'All available player slots have been filled'
+              })
             }
-            console.log(_game)
-            var data = {
-              _id: _game._id,
-              roomId: _game.roomId,
-              //player: pid,
-              username: req.body.name
-            }
-            console.log(data)
-            res.send(data)
-          } else {
-            res.status(400).send({
-              code: 'gameFull',
-              message: 'All available player slots have been filled'
-            })
+
+
           }
-        }
-      )
-    }
+
+
+
+
+
+
   })
 })
 
@@ -153,37 +152,31 @@ var gameInstances = new Map()
 
 io.sockets.on('connection', function(socket) {
   socket.on('join', data => {
-    console.log(data)
-    console.log(roomClientMap)
-    console.log(data.roomId)
-    roomClientMap.get(data.roomId).push(socket);
-    Game.findOne({ _id: data._id }).exec((err, game) => {
-      if (err || !game) {
-        console.log('Could not find room for socket')
-      } else {
-        var room = game.roomId
-        var GameStateInstance = GameState(io, room, roomClientMap.get(room))
-        console.log('socket connected to room: ' + room)
-        socket.join(room)
-        GameStateInstance.startGame()
-        gameInstances.set(room, GameStateInstance)
 
-      }
-    })
+    roomClientMap.get(data.roomId).push(socket);
+      Game.findOne(
+      { _id: data._id },
+      (err, game) => {
+        if (err || !game) {
+          console.log('Could not find room for socket')
+        } else {
+          var room = game.roomId
+          var pCount = 0
+          console.log('socket connected to room: ' + room)
+          socket.join(room)
+          if (game.player1.status == 'Joined' && game.player2.status == 'Joined') {
+
+            var GameStateInstance = GameState(io, room, roomClientMap.get(room))
+            GameStateInstance.startGame()
+            gameInstances.set(room, GameStateInstance)
+          }
+        }
+      })
   })
 
   socket.on('endPress', function(data) {
-    console.log("endPress: " + data.roomId)
     if (gameInstances.has(data.roomId))
-    gameInstances.get(data.roomId).switchTurns()
+      gameInstances.get(data.roomId).switchTurns()
   })
 
 })
-/*
-  console.log('new connection: ' + socket.id)
-  clients.push(socket)
-  if (clients.length == 2) {
-    GameState = require('./lib/game_state.js')(io, clients)
-    GameState.startGame()
-  }
-*/

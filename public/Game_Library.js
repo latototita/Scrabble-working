@@ -99,7 +99,7 @@ var Game = (function(player) {
           roomId = data.roomId
           socket.emit('join', {
             'roomId': data.roomId,
-            '_id': null
+            '_id': data._id
           })
         }
       })

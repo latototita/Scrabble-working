@@ -101,6 +101,29 @@ var Game = (function(player) {
 
     emitBestWord: function() {
       socket.emit('bestWord', {})
+    },
+
+    connect: function () {
+      var room =  $("#gameId").val()
+      console.log(room)
+      $.ajax({
+        type: "POST",
+        url: "/join",
+        processData: false,
+        contentType: 'application/json',
+        data: JSON.stringify({
+          'name': username,
+          'room': room
+        }),
+        success: function(data, status, jqXHR) {
+          console.log(data)
+          socket.emit('join', {
+            '_id': data._id,
+            'pid': data.player,
+            'username': data.username,
+          });
+        }
+      })
     }
   }
 })()

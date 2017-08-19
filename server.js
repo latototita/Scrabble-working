@@ -16,6 +16,7 @@ var app = express(),
 var GameStateLib = require('./lib/game_state.js')
 
 server.listen(3000)
+mongoose.Promise = global.Promise
 mongoose.connect('mongodb://localhost/scrabble')
 
 app.use(express.static('public'))
@@ -37,16 +38,15 @@ db.once('open', function() {
   )
   var gameSchema = new mongoose.Schema({
     roomId: String,
-    status: String,
     players: [playerSchema]
   })
 
   gameSchema.statics.findByRoomId = function(room) {
-    return this.find({ roomId: room })
+    return this.findOne({ roomId: room })
   }
 
   gameSchema.methods.findPlayer = function(player) {
-    return this.find({ players: { $in: [player] } })
+    return this.findOne({ players: { $in: [player] } })
   }
 
   Game = mongoose.model('Game', gameSchema)
@@ -64,7 +64,7 @@ app.post('/start', function(req, res) {
       },
       {
         id: pid + '-1',
-        name: 'Open',
+        name: 'NULL',
         status: 'Open'
       }
     ]
@@ -72,7 +72,6 @@ app.post('/start', function(req, res) {
   Game.create(
     {
       roomId: roomId,
-      status: 'Waiting',
       players: players
     },
     (err, game) => {
@@ -86,52 +85,57 @@ app.post('/start', function(req, res) {
 })
 
 app.post('/join', function(req, res) {
-  console.log('Attempting to joing room: ' + req.query.room)
-  var pid = uniqid(),
+  console.log('Attempting to joing room: ' + req.body.room)
+  var pid = uniqid() + '-1',
     player,
-    pidx,
-    game
+    pidx
 
-  if (game = Game.findByRoomId(req.query.room)) {
-    console.log('room found')
-    console.log('success')
-    player = {
-      id: pid,
-      name: req.body.name,
-      status: 'joined'
-    }
-
-    game = Game.findOneAndUpdate(
-      {
-        _id: game._id,
-        'players.status': { $in: ['Open'] }
-      },
-      {
-        $set: { 'players.$': player }
-      }
-    )
-
-    if (game) {
-      console.log('successfully joined room')
-      var data = {
-        'action': 'join',
-        'player': pid
-      }
-
-      res.sendFile('public/index.html', {root: __dirname })
-
-    } else {
-      res.send(400, {
-        code: 'gameFull',
-        message: 'All available player slots have been filled'
+  Game.findByRoomId(req.body.room).exec((err, game) => {
+    if (err || !game) {
+      res.status(400).send({
+        code: 'roomNotFound',
+        message: 'Failed to find the expected game room'
       })
+    } else {
+      console.log('room found')
+      console.log('success')
+      player = {
+        id: pid,
+        name: req.body.name,
+        status: 'Joined'
+      }
+
+      Game.findOneAndUpdate(
+        { _id: game._id },
+        { players: { $elemMatch: { status: 'Open' } } },
+        (err, _game) => {
+          if (_game) {
+            console.log('successfully joined room')
+
+            for (p = 0; p < NUM_REQUIRED_PLAYERS; p++) {
+              if (_game.players[p].status == 'Open') {
+                console.log('SDFASDFASDF')
+                _game.players[p] = player
+              }
+            }
+            console.log(_game)
+            var data = {
+              _id: _game._id,
+              player: pid,
+              username: req.body.name
+            }
+            console.log(data)
+            res.send(data)
+          } else {
+            res.status(400).send({
+              code: 'gameFull',
+              message: 'All available player slots have been filled'
+            })
+          }
+        }
+      )
     }
-  } else {
-    res.send(400, {
-      code: 'roomNotFound',
-      message: 'Failed to find the expected game room'
-    })
-  }
+  })
 })
 
 var clients = []
@@ -141,53 +145,33 @@ var GameState
 
 var numRooms = 0
 var rooms = {}
+var gameInstances = new Map()
 
 io.sockets.on('connection', function(socket) {
-  var room, id, player
-
   socket.on('join', data => {
-    Game.findByRoom(data.roomId, (err, game) => {
-      var playerCount = 0,
-        containsPlayer
-
-      if (game) {
-        id = game._id
-        room = game.roomId
-        player = data.player
-
-        pdata = game.findPlayer(player)
-
-        if (pdata.toArray().length > 1) {
-          console.log('Error: multiple games with the same player')
-        }
-
-        if (pdata) {
-          console.log('socket connected to room: ' + room)
-          socket.join(room)
-          io.sockets.in(room).emit('joined')
-
-          game.players.forEach(p => {
-            if (p.status == 'joined') playerCount++
-          })
-
-          if (playerCount == NUM_REQUIRED_PLAYERS) {
-            game.save((err, game) => {
-              io.sockets.in(room).emit('ready')
-            })
-          }
-        }
+    Game.findOne({ _id: data._id }).exec((err, game) => {
+      if (err || !game) {
+        console.log('Could not find room for socket')
+      } else {
+        var room = game.roomId
+        console.log('socket connected to room: ' + room)
+        socket.join(room)
+        GameState = require('./lib/game_state.js')(io, clients)
+        GameState.startGame()
+        gameInstances.set(room, GameState)
       }
     })
   })
 
+  socket.on('endPress', function(data) {
+    GameState.switchTurns()
+  })
+})
+/*
   console.log('new connection: ' + socket.id)
   clients.push(socket)
   if (clients.length == 2) {
     GameState = require('./lib/game_state.js')(io, clients)
     GameState.startGame()
   }
-
-  socket.on('endPress', function(data) {
-    GameState.switchTurns()
-  })
-})
+*/

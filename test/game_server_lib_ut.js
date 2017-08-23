@@ -10,27 +10,13 @@ var mockPlayer = {
 
 var SetUp = () => {
   lib = require("../lib/game_server_lib.js")(null);
-
+  
   lib.BoardUtil.updateCurrentPlayer(mockPlayer);
-
   // Initialize tray tiles
-  var id = 'tray-tile0' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'A', 1));
-  id = 'tray-tile1' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'B', 3));
-  id = 'tray-tile2' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'C', 3));
-  id = 'tray-tile3' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'D', 2));
-  id = 'tray-tile4' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'E', 1));
-  id = 'tray-tile5' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'F', 4));
-  id = 'tray-tile6' + mockPlayer.id;
-  lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, 'G', 2));
-
   for (var i = 0; i < 7; i++) {
-     lib.BoardUtil.newCurrentTurnTile(i);
+    var id = 'tray-tile' + i + mockPlayer.id;
+    lib.BoardUtil.setTileMap(id, new lib.Tile(id, null, string.fromCharCode(65 + i), 1)); // ABCDEFG
+    lib.BoardUtil.newCurrentTurnTile(i);
   }
 }
 

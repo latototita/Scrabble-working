@@ -34,6 +34,7 @@ var Game = (function(player) {
             'roomId': data.roomId,
             '_id': data._id
           })
+            $("#game-id").text(data.roomId)
         }
       })
       },

@@ -9,7 +9,7 @@ var mockPlayer = {
   };
 
 var SetUp = () => {
-  lib = require("../lib/game_server_lib.js")(null);
+  lib = require("../lib/core_utilities.js")(null);
   
   lib.BoardUtil.updateCurrentPlayer(mockPlayer);
   // Initialize tray tiles

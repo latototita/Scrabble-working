@@ -11,27 +11,46 @@
 <body>
 	<div id="board"></div>
 	<div id="tray"></div>
-	<ul class="scores">
-		<li>
-			Your Score: <span id="your-score">0</span>
-		</li>
-		<li>
-			Opponent's Score: <span id="opponent-score">0</span>
-		</li>
-	</ul>
-	<button id="start-turn" onclick="Game.startGame()">Start Turn</button>
-	<button id="end-turn" onclick="Game.endTurn()">End Turn</button>
-	<button id="return-tiles" onclick="BoardUtil.returnToTray()">Reset Tiles</button>
-	<button id="best-word" onclick="Game.emitBestWord()">Show Best Word</button>
-	<button id="connect" onclick="Game.connect()">Connect</button>
+	<div id="control" >
 
-	<textarea id="gameId">Enter target game ID</textarea
+		<ul class="scores">
+			<li>
+				Your Score: <span id="your-score">0</span>
+			</li>
+			<li>
+				Opponent's Score: <span id="opponent-score">0</span>
+			</li>
+		</ul>
 
-<p>Connect to a game with a provided ID</p>
+
+		<div>
+			<button id="start-turn" onclick="Game.startGame()">Start Turn</button>
+			<button id="end-turn" onclick="Game.endTurn()">End Turn</button>
+			<button id="return-tiles" onclick="BoardUtil.returnToTray()">Reset Tiles</button>
+			<button id="best-word" onclick="Game.emitBestWord()">Show Best Word</button>
+
+		</div>
+
+		<p>Your game ID: <span id="game-id"></span></p>
+
+		<div>
+		<p>Connect to a game with a provided ID: </p>
+
+		<textarea id="gameId">Enter target game ID</textarea>
+
+		</div>
+		<button id="connect" onclick="Game.connect()">Connect</button>
+	</div>
+
+	<style>
+		#control {
+			display: inline
+		}
+	</style>
 
 	<script type="text/javascript" src="jquery.js"></script>
 	<script type="text/javascript" src="jquery-ui-1.12.1/jquery-ui.js"></script>
-	<script type="text/javascript" src="Game_Library.js"></script>
+	<script type="text/javascript" src="game_library.js"></script>
 	<script type="text/javascript" src="UI.js"></script>
 
 </body>

@@ -1,5 +1,5 @@
 import sys, os, json
-from itertools import filterfalse, takewhile, dropwhile
+from itertools import ifilterfalse, takewhile, dropwhile
 
 SPACE = ' '
 NUM_TRAY_TILES = 7
@@ -98,7 +98,7 @@ def subLists(length, lines):
           while line[start] is not SPACE:
             start += 1
           start += 1
-        noSpaces = [i for i in filterfalse(lambda x: x is SPACE, line[start:end + 1])]
+        noSpaces = [i for i in ifilterfalse(lambda x: x is SPACE, line[start:end + 1])]
         if len(noSpaces) is not 0:
           yield (start, orientation, line[start:end + 1])
         end += 1

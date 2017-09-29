@@ -12,11 +12,6 @@ var roomId
 
 var socket = io.connect('http://localhost:3000')
 
-function tile(_id, _character, _score) {
-  this.id = _id
-  ;(this.character = _character), (this.score = _score), (this.left = null), (this.up = null), (this.right = null), (this.down = null)
-}
-
 var Game = (function(player) {
   var roomId
 
@@ -172,6 +167,11 @@ var BoardUtil = (function() {
 
   // Public
   return {
+
+    /*
+     * Offset functions and variables are used to synchronize tile dragging across browsers of different sizes
+     */
+
     saveOffset: function(target) {
       console.log(target)
       targetId = this.getIdFromArg(target)
@@ -183,8 +183,6 @@ var BoardUtil = (function() {
       })
     },
 
-    hasTile: function(tile) {},
-
     getOriginalOffset: function(target) {
       var offset = offsetMap.get(target)
       return {
@@ -193,6 +191,7 @@ var BoardUtil = (function() {
       }
     },
 
+    // Sets the character display of a tile
     setTileChar: function(target, char) {
       var targetId = this.getIdFromArg(target)
       console.log('char: ' + char + ' | ' + targetId)
@@ -217,7 +216,6 @@ var BoardUtil = (function() {
     },
 
     setTileDraggable: function(_target) {
-      console.log('HERERERE')
       element = this.getDomFromArg(_target)
       if (element.draggable('instance')) {
         // If there's already an instance,
@@ -231,7 +229,6 @@ var BoardUtil = (function() {
         element.draggable({
           drag: function(event, ui) {
             //TODO
-            console.log('dragging')
             var coord = $(this).offset()
             coord.left /= $(window).width()
             coord.top /= $(window).width()
@@ -392,29 +389,6 @@ var BoardUtil = (function() {
       if (!isCurrentTurn) return
       BoardUtil.setBlankSpace($('.' + CURRENT_TILE_CLASS + '.board-tile'))
       BoardUtil.setTileDraggable($('#tray > div'))
-
-      /*
-			var callback = function(boardTile){
-				var index = 0
-				return {
-					call: function() {
-						if ($(this).html() == "")  {
-							console.log($(this));
-							$(this).html(boardTile.html());
-							BoardUtil.setTileDraggable($(this));
-							BoardUtil.setBlankSpace(boardTile);
-							return false; // Stops looping through tray tiles.
-						}
-					}
-				}
-			};
-
-			currentTurnTiles.each(function() {
-				var element = $(this);
-				var func = callback(element);
-				$("#tray > div").each(func.call);
-			});
-			*/
 
       socket.emit('returnToTray', {})
     }
